@@ -1,0 +1,45 @@
+name: Terraform Plan and Apply on Main Branch Push
+on:
+ push:
+   branches:
+     - main
+
+jobs:
+  terraform:
+    name: 'Terraform Plan'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    env:
+      SNOWFLAKE_REGION: ${{ vars.SNOWFLAKE_REGION }}
+      SNOWFLAKE_ACCOUNT_NAME: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
+      SNOWFLAKE_ORGANIZATION_NAME: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
+      SNOWFLAKE_USER: ${{ vars.SNOWFLAKE_USER }}
+      SNOWFLAKE_AUTHENTICATOR: ${{ vars.SNOWFLAKE_AUTHENTICATOR }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Initialize
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Destroy
+        continue-on-error: true
+        run: terraform destroy -auto-approve
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
