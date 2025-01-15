@@ -19,13 +19,9 @@ CORTEX_SEARCH_SERVICE = "FinancialBot_SEARCH_SERVICE_CS"
 # Columns to Query in the Service
 COLUMNS = ["chunk", "relative_path", "category"]
 
-session = get_active_session()
-root = Root(session)
-svc = root.databases[CORTEX_SEARCH_DATABASE].schemas[CORTEX_SEARCH_SCHEMA].cortex_search_services[CORTEX_SEARCH_SERVICE]
-
 # Functions
 
-def config_options():
+def config_options(session):
     st.sidebar.selectbox('Select your model:', (
         'mixtral-8x7b', 'snowflake-arctic', 'mistral-large', 'llama3-8b',
         'llama3-70b', 'reka-flash', 'mistral-7b', 'llama2-70b-chat', 'gemma-7b'
@@ -44,7 +40,7 @@ def init_messages():
     if st.session_state.clear_conversation or "messages" not in st.session_state:
         st.session_state.messages = []
 
-def get_similar_chunks_search_service(query):
+def get_similar_chunks_search_service(svc, query):
     filter_obj = ("ALL" if st.session_state.category_value == "ALL" else {"@eq": {"category": st.session_state.category_value}})
     response = svc.search(query, COLUMNS, filter=(filter_obj if filter_obj != "ALL" else None), limit=NUM_CHUNKS)
     st.sidebar.json(response.json())
@@ -67,13 +63,13 @@ def summarize_question_with_history(chat_history, question):
         st.sidebar.caption(summary)
     return summary.replace("'", "")
 
-def create_prompt(myquestion):
+def create_prompt(svc, myquestion):
     chat_history = get_chat_history() if st.session_state.use_chat_history else []
     if chat_history:
         question_summary = summarize_question_with_history(chat_history, myquestion)
-        prompt_context = get_similar_chunks_search_service(question_summary)
+        prompt_context = get_similar_chunks_search_service(svc, question_summary)
     else:
-        prompt_context = get_similar_chunks_search_service(myquestion)
+        prompt_context = get_similar_chunks_search_service(svc, myquestion)
 
     prompt = f"""
         You are an expert assistant extracting information from the CONTEXT.
@@ -86,12 +82,17 @@ def create_prompt(myquestion):
     relative_paths = set(item['relative_path'] for item in json.loads(prompt_context)['results'])
     return prompt, relative_paths
 
-def answer_question(myquestion):
-    prompt, relative_paths = create_prompt(myquestion)
+def answer_question(svc, myquestion):
+    prompt, relative_paths = create_prompt(svc, myquestion)
     response = Complete(st.session_state.model_name, prompt)
     return response, relative_paths
 
 def main():
+    session = get_active_session()
+
+    root = Root(session)
+    svc = root.databases[CORTEX_SEARCH_DATABASE].schemas[CORTEX_SEARCH_SCHEMA].cortex_search_services[CORTEX_SEARCH_SERVICE]
+
     st.title(":speech_balloon: Chat with Tech 10K report with Snowflake Cortex")
 
     # Document Listing
@@ -100,7 +101,7 @@ def main():
     document_names = [doc["name"] for doc in docs_available]
     st.dataframe(pd.DataFrame(document_names, columns=["Document Names"]))
 
-    config_options()
+    config_options(session)
     init_messages()
 
     # Chat Messages Display
@@ -116,7 +117,7 @@ def main():
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             with st.spinner(f"{st.session_state.model_name} thinking..."):
-                response, relative_paths = answer_question(question)
+                response, relative_paths = answer_question(svc, question)
                 message_placeholder.markdown(response)
                 if relative_paths:
                     with st.sidebar.expander("Related Documents"):
