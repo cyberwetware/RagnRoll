@@ -1,5 +1,5 @@
 resource "snowflake_database" "db" {
-  name = "TF_RAG_APP"
+  name = "gh_ragnroll_db"
 }
 
 resource "snowflake_warehouse" "warehouse" {
