@@ -9,6 +9,9 @@ jobs:
   gemini_assistant:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-cli') }}
     runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GOOGLE_GENAI_USE_VERTEXAI: ${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}
     permissions:
       contents: write
       pull-requests: write
@@ -17,8 +20,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Export Gemini API Key
+        run: export GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} && echo "GEMINI_API_KEY=$GEMINI_API_KEY"
+
       - name: Run Gemini CLI
-        uses: google-github-actions/run-gemini-cli@v0.1.12
+        uses: google-github-actions/run-gemini-cli
         with:
           command: 'aipr -y -f ${{ github.event.issue.pull_request.url }} "${{ github.event.comment.body }}"'
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
