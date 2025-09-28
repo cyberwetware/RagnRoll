@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GOOGLE_GENAI_USE_VERTEXAI: ${{ GOOGLE_GENAI_USE_VERTEXAI }}
+      GOOGLE_GENAI_USE_VERTEXAI: ${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}
     permissions:
       contents: write
       pull-requests: write
