@@ -17,6 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Export Gemini API Key
+        run: export GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} && echo "GEMINI_API_KEY=$GEMINI_API_KEY"
+
       - name: Run Gemini CLI
         uses: google-github-actions/run-gemini-cli@v0.1.12
         with:
