@@ -24,7 +24,7 @@ jobs:
         run: export GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} && echo "GEMINI_API_KEY=$GEMINI_API_KEY"
 
       - name: Run Gemini CLI
-        uses: google-github-actions/run-gemini-cli
+        uses: google-github-actions/run-gemini-cli@v0.1.12
         with:
           command: 'aipr -y -f ${{ github.event.issue.pull_request.url }} "${{ github.event.comment.body }}"'
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
