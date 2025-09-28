@@ -1,0 +1,24 @@
+name: Gemini CLI Assistant
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  gemini_assistant:
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '@gemini-cli') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Gemini CLI
+        uses: google-github-actions/run-gemini-cli@v1
+        with:
+          command: 'aipr -y -f ${{ github.event.issue.pull_request.url }} "${{ github.event.comment.body }}"'
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
